@@ -364,9 +364,10 @@ impl SPPMIntegrator {
                         {
                             let bands: Vec<&mut [SPPMPixel]> =
                                 pixels.chunks_mut(chunk_size).collect();
+                            let num_bands = bands.len();
                             let grid = &grid;
                             crossbeam::scope(|scope| {
-                                let (band_tx, band_rx) = crossbeam_channel::bounded(num_cores);
+                                let (band_tx, band_rx) = crossbeam_channel::bounded(num_bands);
                                 // spawn worker threads
                                 for (b, band) in bands.into_iter().enumerate() {
                                     let band_tx = band_tx.clone();
@@ -438,7 +439,7 @@ impl SPPMIntegrator {
                                 }
                                 // spawn thread to report progress
                                 scope.spawn(move |_| {
-                                    for _ in 0..num_cores {
+                                    for _ in 0..num_bands {
                                         band_rx.recv().unwrap();
                                     }
                                 });
@@ -463,11 +464,12 @@ impl SPPMIntegrator {
                         {
                             let photons_vec: Vec<i32> = (0..self.photons_per_iteration).collect();
                             let bands: Vec<&[i32]> = photons_vec.chunks(chunk_size).collect();
+                            let num_bands = bands.len();
                             let grid_once = &grid_once;
                             let integrator = &self;
                             let light_distr = &light_distr;
                             crossbeam::scope(|scope| {
-                        let (band_tx, band_rx) = crossbeam_channel::bounded(num_cores);
+                        let (band_tx, band_rx) = crossbeam_channel::bounded(num_bands);
                         // spawn worker threads
                         for (b, band) in bands.into_iter().enumerate() {
                             let band_tx = band_tx.clone();
@@ -709,7 +711,7 @@ impl SPPMIntegrator {
                         }
                         // spawn thread to report progress
                         scope.spawn(move |_| {
-                            for _ in 0..num_cores {
+                            for _ in 0..num_bands {
                                 band_rx.recv().unwrap();
                             }
                         });
@@ -725,8 +727,9 @@ impl SPPMIntegrator {
                     let chunk_size: usize = (n_pixels / num_cores as i32) as usize;
                     {
                         let bands: Vec<&mut [SPPMPixel]> = pixels.chunks_mut(chunk_size).collect();
+                        let num_bands = bands.len();
                         crossbeam::scope(|scope| {
-                            let (band_tx, band_rx) = crossbeam_channel::bounded(num_cores);
+                            let (band_tx, band_rx) = crossbeam_channel::bounded(num_bands);
                             // spawn worker threads
                             for (b, band) in bands.into_iter().enumerate() {
                                 let band_tx = band_tx.clone();
@@ -776,7 +779,7 @@ impl SPPMIntegrator {
                             }
                             // spawn thread to report progress
                             scope.spawn(move |_| {
-                                for _ in 0..num_cores {
+                                for _ in 0..num_bands {
                                     band_rx.recv().unwrap();
                                 }
                             });
